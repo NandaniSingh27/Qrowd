@@ -4,7 +4,9 @@ const helmet = require('helmet');
 const authRoutes = require('./routes/authRoutes');
 const roomRoutes = require('./routes/roomRoutes');
 const questionRoutes = require('./routes/questionRoutes');
+const mongoSanitize = require('express-mongo-sanitize');
 const app = express();
+app.use(mongoSanitize());
 
 app.use(helmet());
 app.use(cors({

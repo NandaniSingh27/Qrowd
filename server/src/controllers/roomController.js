@@ -33,10 +33,28 @@ const getRoomByCode = async (req, res) => {
       return res.status(404).json({ message: 'Room not found' });
     }
 
-    const questions = await Question.find({ room: room._id, isHidden: false })
+    // Check if the requester is the host (optional auth on a public route)
+    let isHost = false;
+    const authHeader = req.headers.authorization;
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      try {
+        const jwt = require('jsonwebtoken');
+        const decoded = jwt.verify(authHeader.split(' ')[1], process.env.JWT_SECRET);
+        isHost = decoded.userId === room.host.toString();
+      } catch (err) {
+        // invalid/expired token — treat as guest, don't error
+      }
+    }
+
+    const filter = { room: room._id };
+    if (!isHost) {
+      filter.isHidden = false; // guests never see hidden questions
+    }
+
+    const questions = await Question.find(filter)
       .sort({ isPinned: -1, voteCount: -1, createdAt: -1 });
 
-    res.json({ room, questions });
+    res.json({ room, questions, isHost });
   } catch (err) {
     console.error('Get room error:', err.message);
     res.status(500).json({ message: 'Something went wrong' });
