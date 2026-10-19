@@ -9,11 +9,19 @@ const authLimiter = rateLimit({
 });
 
 const publicLimiter = rateLimit({
-  windowMs: 1 * 60 * 1000, // 1 minute
-  max: 20, // 20 requests per IP per minute
+  windowMs: 1 * 60 * 1000,
+  max: 20,
   message: { message: 'Too many requests, slow down' },
   standardHeaders: true,
   legacyHeaders: false,
 });
 
-module.exports = { authLimiter, publicLimiter };
+const roomCreateLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000, // 1 hour
+  max: 20,
+  message: { message: 'Too many rooms created, try again later' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+module.exports = { authLimiter, publicLimiter, roomCreateLimiter };

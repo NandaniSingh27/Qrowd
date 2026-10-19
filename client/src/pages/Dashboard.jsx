@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { createRoom, getMyRooms, toggleRoom } from '../api/rooms';
+import { createRoom, getMyRooms, toggleRoom, deleteRoom } from '../api/rooms';
 import { useAuth } from '../context/AuthContext';
 
 const Dashboard = () => {
@@ -54,6 +54,16 @@ const Dashboard = () => {
       loadRooms();
     } catch (err) {
       setError('Could not update room');
+    }
+  };
+
+  const handleDelete = async (id, title) => {
+    if (!confirm(`Delete "${title}" permanently? This cannot be undone.`)) return;
+    try {
+      await deleteRoom(id);
+      loadRooms();
+    } catch (err) {
+      setError('Could not delete room');
     }
   };
 
@@ -141,6 +151,12 @@ const Dashboard = () => {
                   className="text-sm font-medium text-slate-700 border border-slate-200 px-3 py-1.5 rounded-lg hover:bg-slate-50 transition"
                 >
                   {room.isOpen ? 'Close' : 'Reopen'}
+                </button>
+                <button
+                  onClick={() => handleDelete(room._id, room.title)}
+                  className="text-sm font-medium text-red-600 border border-red-200 px-3 py-1.5 rounded-lg hover:bg-red-50 transition"
+                >
+                  Delete
                 </button>
               </div>
             </div>

@@ -1,6 +1,7 @@
 const { nanoid } = require('nanoid');
 const Room = require('../models/Room');
 const Question = require('../models/Question');
+const Vote = require('../models/Vote');
 
 const createRoom = async (req, res) => {
   try {
@@ -82,4 +83,30 @@ const closeRoom = async (req, res) => {
   }
 };
 
-module.exports = { createRoom, getMyRooms, getRoomByCode, closeRoom };
+const deleteRoom = async (req, res) => {
+  try {
+    const room = await Room.findById(req.params.id);
+    if (!room) {
+      return res.status(404).json({ message: 'Room not found' });
+    }
+
+    if (room.host.toString() !== req.userId) {
+      return res.status(403).json({ message: 'Not authorized' });
+    }
+
+    // Clean up related data so nothing orphaned is left behind
+    const questions = await Question.find({ room: room._id });
+    const questionIds = questions.map((q) => q._id);
+
+    await Vote.deleteMany({ question: { $in: questionIds } });
+    await Question.deleteMany({ room: room._id });
+    await room.deleteOne();
+
+    res.json({ message: 'Room deleted' });
+  } catch (err) {
+    console.error('Delete room error:', err.message);
+    res.status(500).json({ message: 'Something went wrong' });
+  }
+};
+
+module.exports = { createRoom, getMyRooms, getRoomByCode, closeRoom, deleteRoom };
